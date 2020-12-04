@@ -7,6 +7,9 @@ params = Params()
 import cereal
 import cereal.messaging as messaging
 
+def get_shutdown_val(): #위치 이동
+
+  return int(1005)
 
 def main(gctx=None):
 
@@ -44,11 +47,6 @@ def main(gctx=None):
         os.system('LD_LIBRARY_PATH="" svc power shutdown')
 
     time.sleep(1)
-
-def get_shutdown_val():
-
-  return int(30)
-
 
 if __name__ == "__main__":
   main()

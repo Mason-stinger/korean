@@ -126,16 +126,16 @@ class nTune():
   def checkValidCommon(self):
     updated = False
 
-    if self.checkValue("useLiveSteerRatio", 0., 1., 1.):
+    if self.checkValue("useLiveSteerRatio", 0., 1., 0.): # 학습값 사용안함
       updated = True
 
-    if self.checkValue("steerRatio", 5.0, 25.0, 16.0):
+    if self.checkValue("steerRatio", 5.0, 25.0, 14.85): # 제네시스 기준 설정
       updated = True
 
-    if self.checkValue("steerActuatorDelay", 0.1, 0.8, 0.25):
+    if self.checkValue("steerActuatorDelay", 0.1, 0.8, 0.15): # 테네시 선호도 설정
       updated = True
 
-    if self.checkValue("steerRateCost", 0.1, 1.5, 0.6):
+    if self.checkValue("steerRateCost", 0.1, 1.5, 0.45): # 테네시 선호도 설정
       updated = True
 
     if self.checkValue("cameraOffset", -1.0, 1.0, 0.06):
@@ -214,7 +214,7 @@ class nTune():
         if self.CP.lateralTuning.which() == 'lqr' and self.lqr is not None:
           self.config["scale"] = round(self.CP.lateralTuning.lqr.scale, 2)
           self.config["ki"] = round(self.CP.lateralTuning.lqr.ki, 3)
-          self.config["dcGain"] = round(self.CP.lateralTuning.lqr.dcGain, 6)
+          self.config["dcGain"] = round(self.CP.lateralTuning.lqr.dcGain, 7) # 테네시수정
           self.config["steerLimitTimer"] = round(self.CP.steerLimitTimer, 2)
           self.config["steerMax"] = round(self.CP.steerMaxV[0], 2)
 
@@ -227,9 +227,9 @@ class nTune():
           self.config["steerMax"] = round(self.CP.steerMaxV[0], 2)
 
         else:
-          self.config["useLiveSteerRatio"] = 1.
-          self.config["steerRatio"] = round(self.CP.steerRatio, 2)
-          self.config["steerActuatorDelay"] = round(self.CP.steerActuatorDelay, 2)
+          self.config["useLiveSteerRatio"] = 0. # 테네시 수정
+          self.config["steerRatio"] = round(self.CP.steerRatio, 3) # 테네시 수정
+          self.config["steerActuatorDelay"] = round(self.CP.steerActuatorDelay, 3) # 테네시 수정
           self.config["steerRateCost"] = round(self.CP.steerRateCost, 2)
 
     except:
