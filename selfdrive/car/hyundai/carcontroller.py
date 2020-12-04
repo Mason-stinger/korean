@@ -26,7 +26,6 @@ ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
 STEER_ANG_MAX = 360  # SPAS Max Angle
 STEER_ANG_MAX_RATE = 1.5  # SPAS Degrees per ms
 
-
 def accel_hysteresis(accel, accel_steady):
   # for small accel oscillations within ACCEL_HYST_GAP, don't change the accel command
   if accel > accel_steady + ACCEL_HYST_GAP:
@@ -75,11 +74,10 @@ class CarController():
     self.steer_rate_limited = False
     self.lkas11_cnt = 0
     self.scc12_cnt = 0
-
     self.resume_cnt = 0
+    self.last_resume_frame = 0 # 오토리쥼관련 테네시 수정
     self.last_lead_distance = 0
     self.resume_wait_timer = 0
-
     self.turning_signal_timer = 0
     self.longcontrol = CP.openpilotLongitudinalControl
     self.scc_live = not CP.radarOffCan
@@ -124,7 +122,8 @@ class CarController():
     spas_active = CS.spas_enabled and enabled and (self.spas_always or CS.out.vEgo < 7.0)  # 25km/h
 
     # disable if steer angle reach 90 deg, otherwise mdps fault in some models
-    lkas_active = enabled and abs(CS.out.steeringAngle) < 90. and not spas_active
+    # temporarily disable steering when LKAS button off
+    lkas_active = enabled and abs(CS.out.steeringAngle) < 90. # 테네시 수정 TenesiDel -> and self.lkas_button_on
 
     # fix for Genesis hard fault at low speed
     if CS.out.vEgo < 60 * CV.KPH_TO_MS and self.car_fingerprint == CAR.GENESIS and not CS.mdps_bus:
@@ -133,7 +132,7 @@ class CarController():
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:
       self.turning_signal_timer = 0.5 / DT_CTRL  # Disable for 0.5 Seconds after blinker turned off
-    if self.turning_indicator_alert and CS.out.vEgo < 2 * CV.KPH_TO_MS: # set and clear by interface
+    if self.turning_indicator_alert and CS.out.vEgo > 70 * CV.KPH_TO_MS: #Tenesi시속70미만에서는 상시조향
       lkas_active = 0
     if self.turning_signal_timer > 0:
       self.turning_signal_timer -= 1
@@ -195,29 +194,20 @@ class CarController():
     if pcm_cancel_cmd and self.longcontrol:
       can_sends.append(create_clu11(self.packer, frame % 0x10, CS.scc_bus, CS.clu11, Buttons.CANCEL, clu11_speed))
 
-    # fix auto resume - by neokii
-    if CS.out.cruiseState.standstill:
-
+    if CS.out.cruiseState.standstill: #TenesiADD 제네시스DH 기준으로 작동 잘되게 수정
+      # run only first time when the car stopped
       if self.last_lead_distance == 0:
+        # get the lead distance from the Radar
         self.last_lead_distance = CS.lead_distance
         self.resume_cnt = 0
-        self.resume_wait_timer = 0
-
-      # scc smoother
-      elif self.scc_smoother.is_active(frame):
-        pass
-
-      elif self.resume_wait_timer > 0:
-        self.resume_wait_timer -= 1
-
-      elif CS.lead_distance != self.last_lead_distance:
-        can_sends.append(create_clu11(self.packer, self.resume_cnt, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
+      # when lead car starts moving, create 6 RES msgs #TenesiADD
+      elif CS.lead_distance != self.last_lead_distance and (frame - self.last_resume_frame) > 5:
+        can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
         self.resume_cnt += 1
-
-        if self.resume_cnt >= ALIVE_COUNT_MIN:
-          self.resume_cnt = 0
-          self.resume_wait_timer = randint(WAIT_COUNT_MIN, WAIT_COUNT_MAX)
-
+        # interval after 6 msgs
+        if self.resume_cnt > 5:
+          self.last_resume_frame = frame
+          self.resume_cnt = 0 #TenesiADD 빠릿빠릿한 반응 코드 적용
     # reset lead distnce after the car starts moving
     elif self.last_lead_distance != 0:
       self.last_lead_distance = 0

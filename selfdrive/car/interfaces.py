@@ -88,8 +88,8 @@ class CarInterfaceBase():
   def create_common_events(self, cs_out, extra_gears=[], gas_resume_speed=-1, pcm_enable=True):  # pylint: disable=dangerous-default-value
     events = Events()
 
-#    if cs_out.doorOpen:
-#      events.add(EventName.doorOpen)
+    if cs_out.doorOpen:
+      events.add(EventName.doorOpen)
 #    if cs_out.seatbeltUnlatched:
 #      events.add(EventName.seatbeltNotLatched)
     if cs_out.gearShifter != GearShifter.drive and cs_out.gearShifter not in extra_gears:
@@ -113,8 +113,8 @@ class CarInterfaceBase():
 
     if cs_out.steerError:
       events.add(EventName.steerUnavailable)
-    elif cs_out.steerWarning:
-      events.add(EventName.steerTempUnavailable)
+    #elif cs_out.steerWarning:
+    #  events.add(EventName.steerTempUnavailable)
 
     # Disable on rising edge of gas or brake. Also disable on brake when speed > 0.
     # Optionally allow to press gas at zero speed to resume.

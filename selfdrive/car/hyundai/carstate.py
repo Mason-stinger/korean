@@ -119,7 +119,7 @@ class CarState(CarStateBase):
       elif cp.vl["CLU15"]["CF_Clu_InhibitR"] == 1:
         ret.gearShifter = GearShifter.reverse
       else:
-        ret.gearShifter = GearShifter.unknown
+        ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
     # Gear Selecton via TCU12
     elif self.CP.carFingerprint in FEATURES["use_tcu_gears"]:
       gear = cp.vl["TCU12"]["CUR_GR"]
@@ -130,7 +130,7 @@ class CarState(CarStateBase):
       elif gear > 0 and gear < 9:    # unaware of anything over 8 currently
         ret.gearShifter = GearShifter.drive
       else:
-        ret.gearShifter = GearShifter.unknown
+        ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
     # Gear Selecton - This is only compatible with optima hybrid 2017
     elif self.CP.carFingerprint in FEATURES["use_elect_gears"]:
       gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
@@ -143,7 +143,7 @@ class CarState(CarStateBase):
       elif gear == 7:
         ret.gearShifter = GearShifter.reverse
       else:
-        ret.gearShifter = GearShifter.unknown
+        ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
     # Gear Selecton - This is not compatible with all Kia/Hyundai's, But is the best way for those it is compatible with
     else:
       gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
@@ -156,7 +156,7 @@ class CarState(CarStateBase):
       elif gear == 7:
         ret.gearShifter = GearShifter.reverse
       else:
-        ret.gearShifter = GearShifter.unknown
+        ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
 
     if self.CP.carFingerprint in FEATURES["use_fca"]:
       ret.stockAeb = cp.vl["FCA11"]['FCA_CmdAct'] != 0
@@ -310,19 +310,19 @@ class CarState(CarStateBase):
     ]
 
     checks = [
-      # address, frequency
-      ("TCS13", 50),
-      ("TCS15", 10),
-      ("CLU11", 50),
-      ("ESP12", 100),
-      ("CGW1", 10),
-      ("CGW4", 5),
-      ("WHL_SPD11", 50),
+      # address, frequency DBC정의된 것에 의한 작동
+      ("TCS13", 40),  # 0d916 0x394
+      ("TCS15", 10),  # 0d1287 0x507
+      ("CLU11", 40),  # 0d1265 0x4F1
+      ("ESP12", 100),  # 0d544 0x220
+      ("CGW1", 10),  # 0d1345 0x541
+      ("CGW4", 5),  # 0d1369 0x559
+      ("WHL_SPD11", 40),  # 0d902 0x389
     ]
     if CP.sccBus == 0 and CP.enableCruise:
       checks += [
-        ("SCC11", 50),
-        ("SCC12", 50),
+        ("SCC11", 40),
+        ("SCC12", 40),
       ]
     if CP.mdpsBus == 0:
       signals += [
@@ -339,7 +339,7 @@ class CarState(CarStateBase):
         ("CR_Mdps_OutTq", "MDPS12", 0)
       ]
       checks += [
-        ("MDPS12", 50)
+        ("MDPS12", 40) # GDS 장비의 점검에서 점검시간에서 작동시 40ms시간으로 검사한다를 참조함..
       ]
     if CP.sasBus == 0:
       signals += [

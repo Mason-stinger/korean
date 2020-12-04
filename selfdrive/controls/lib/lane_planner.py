@@ -13,14 +13,11 @@ def compute_path_pinv(length=50):
   pinv = np.linalg.pinv(X)
   return pinv
 
-
 def model_polyfit(points, path_pinv):
   return np.dot(path_pinv, [float(x) for x in points])
 
-
 def eval_poly(poly, x):
   return poly[3] + poly[2]*x + poly[1]*x**2 + poly[0]*x**3
-
 
 class LanePlanner:
   def __init__(self):
@@ -65,7 +62,6 @@ class LanePlanner:
 
   def update_d_poly(self, v_ego):
     # only offset left and right lane lines; offsetting p_poly does not make sense
-
     cameraOffset = ntune_get("cameraOffset")
 
     self.l_poly[3] += cameraOffset

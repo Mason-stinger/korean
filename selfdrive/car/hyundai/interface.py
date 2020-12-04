@@ -33,15 +33,24 @@ class CarInterface(CarInterfaceBase):
     # Most Hyundai car ports are community features for now
     ret.communityFeature = candidate not in [CAR.SONATA, CAR.PALISADE]
 
-    ret.steerActuatorDelay = 0.1  # Default delay
+    ret.steerActuatorDelay = 0.15  # Default delay 테네시수정
     ret.steerRateCost = 0.5
     ret.steerLimitTimer = 0.8
     tire_stiffness_factor = 1.
 
     # genesis
     if candidate == CAR.GENESIS:
-      ret.mass = 1900. + STD_CARGO_KG
+      ret.lateralTuning.init('lqr')
+      ret.mass = 2060. + STD_CARGO_KG
       ret.wheelbase = 3.01
+      ret.steerRatio = 14.825
+      ret.steerActuatorDelay = 0.15
+      ret.steerLimitTimer = 1.3
+      ret.steerRateCost = 0.45
+
+      ret.lateralTuning.lqr.scale = 1800.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.dcGain = 0.002825
     elif candidate == CAR.GENESIS_G70:
       ret.mass = 1640. + STD_CARGO_KG
       ret.wheelbase = 2.84
@@ -81,9 +90,17 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.7
       tire_stiffness_factor = 0.385
     elif candidate in [CAR.KONA_HEV, CAR.KONA_EV]:
+      ret.lateralTuning.init('lqr')
       ret.mass = 1685. + STD_CARGO_KG
       ret.wheelbase = 2.7
-      tire_stiffness_factor = 0.385
+      ret.steerRatio = 12.2
+      ret.steerActuatorDelay = 0.15
+      ret.steerLimitTimer = 1.3
+      ret.steerRateCost = 0.55
+
+      ret.lateralTuning.lqr.scale = 1800.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.dcGain = 0.002825
     elif candidate in [CAR.IONIQ, CAR.IONIQ_EV_LTD]:
       ret.mass = 1490. + STD_CARGO_KG   #weight per hyundai site https://www.hyundaiusa.com/ioniq-electric/specifications.aspx
       ret.wheelbase = 2.7
@@ -96,6 +113,9 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3558. * CV.LB_TO_KG
       ret.wheelbase = 2.80
       tire_stiffness_factor = 0.5
+    elif candidate == CAR.NEXO:
+      ret.mass = 1885. + STD_CARGO_KG
+      ret.wheelbase = 2.79
     # kia
     elif candidate == CAR.SORENTO:
       ret.mass = 1985. + STD_CARGO_KG
@@ -121,32 +141,38 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 1985. + STD_CARGO_KG
       ret.wheelbase = 2.78
     elif candidate in [CAR.NIRO_HEV, CAR.NIRO_EV]:
-      ret.mass = 1737. + STD_CARGO_KG
+      ret.lateralTuning.init('lqr')
+      ret.mass = 1685. + STD_CARGO_KG
       ret.wheelbase = 2.7
-      tire_stiffness_factor = 0.385
+      ret.steerRatio = 12.2
+      ret.steerActuatorDelay = 0.15
+      ret.steerLimitTimer = 1.3
+      ret.steerRateCost = 0.55
+
+      ret.lateralTuning.lqr.scale = 1800.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.dcGain = 0.002825
     elif candidate in [CAR.K7, CAR.K7_HEV]:
-      tire_stiffness_factor = 0.6
+      ret.lateralTuning.init('lqr')
       ret.mass = 1640. + STD_CARGO_KG
       ret.wheelbase = 2.845
+      ret.steerRatio = 12.2
+      ret.steerActuatorDelay = 0.15
+      ret.steerLimitTimer = 1.3
+      ret.steerRateCost = 0.55
+
+      ret.lateralTuning.lqr.scale = 1800.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.dcGain = 0.002825
 
 
-    ret.lateralTuning.init('lqr')
-
-    ret.lateralTuning.lqr.scale = 1680.0
-    ret.lateralTuning.lqr.ki = 0.01
-    ret.lateralTuning.lqr.dcGain = 0.002858
+# 차량별 고유의 셋팅값을 저장하기 위한 기본 조향방법 수치를 변경함..
 
     ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
     ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
     ret.lateralTuning.lqr.c = [1., 0.]
-    ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
-    ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
-
-    ret.steerRatio = 13.8
-    ret.steerActuatorDelay = 0.20
-    ret.steerLimitTimer = 2.0
-
-    ret.steerRateCost = 0.555
+    ret.lateralTuning.lqr.k = [-100., 450.]
+    ret.lateralTuning.lqr.l = [0.22, 0.318]
 
     ret.steerMaxBP = [0.]
     ret.steerMaxV = [1.5]
@@ -159,19 +185,6 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiV = [0.]
     ret.longitudinalTuning.deadzoneBP = [0., 40]
     ret.longitudinalTuning.deadzoneV = [0., 0.02]
-#    ret.longitudinalTuning.kpBP = [0., 10., 40.]
-#    ret.longitudinalTuning.kpV = [1.2, 0.8, 0.3]
-#    ret.longitudinalTuning.kiBP = [0.]
-#    ret.longitudinalTuning.kiV = [0.]
-#    ret.longitudinalTuning.deadzoneBP = [0., 40]
-#    ret.longitudinalTuning.deadzoneV = [0., 0.02]
-
-    #ret.longitudinalTuning.kpBP = [0., 5., 35.]
-    #ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
-    #ret.longitudinalTuning.kiBP = [0., 35.]
-    #ret.longitudinalTuning.kiV = [0.18, 0.12]
-    #ret.longitudinalTuning.deadzoneBP = [0.]
-    #ret.longitudinalTuning.deadzoneV = [0.]
 
     ret.gasMaxBP = [0.]
     ret.gasMaxV = [0.5]
@@ -205,7 +218,6 @@ class CarInterface(CarInterfaceBase):
     ret.sasBus = 1 if 688 in fingerprint[1] and 1296 not in fingerprint[1] else 0
     ret.sccBus = 0 if 1056 in fingerprint[0] else 1 if 1056 in fingerprint[1] and 1296 not in fingerprint[1] \
                                                                      else 2 if 1056 in fingerprint[2] else -1
-
     ret.radarOffCan = ret.sccBus == -1
     ret.openpilotLongitudinalControl = Params().get('LongControlEnabled') == b'1'
     ret.enableCruise = not ret.radarOffCan
@@ -230,8 +242,7 @@ class CarInterface(CarInterfaceBase):
       self.CP.enableCruise = True
 
     # most HKG cars has no long control, it is safer and easier to engage by main on
-
-    if self.mad_mode_enabled and not self.CC.longcontrol:
+    if self.mad_mode_enabled: # 테네시 롱컨트롤 추가 and not self.CC.longcontrol:
       ret.cruiseState.enabled = ret.cruiseState.available
 
     # turning indicator alert logic

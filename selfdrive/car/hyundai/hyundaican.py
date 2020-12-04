@@ -45,13 +45,16 @@ def create_lkas11(packer, frame, car_fingerprint, apply_steer, steer_req,
     values["CF_Lkas_LdwsActivemode"] = 2
     values["CF_Lkas_SysWarning"] = lkas11["CF_Lkas_SysWarning"]
 
+  elif car_fingerprint in [CAR.K5, CAR.K5_HEV, CAR.K7, CAR.K7_HEV]:
+    values["CF_Lkas_LdwsActivemode"] = 0 # 차량에서 확인 필요
+
   elif car_fingerprint == CAR.SONATA_LF_TURBO:
     values["CF_Lkas_FcwOpt_USM"] = 2 if enabled else 1
     values["CF_Lkas_LdwsOpt_USM"] = 2
     values["CF_Lkas_FcwOpt_USM"] = 2 if enabled else 1
     values["CF_Lkas_SysWarning"] = 4 if sys_warning else 0
 
-  if FEATURES["use_ldws"]:
+  if car_fingerprint in [CAR.ELANTRA_LDWS, CAR.K7, CAR.K7_HEV]: # LDWS 및 특정차량 코드 변경
     values["CF_Lkas_LdwsOpt_USM"] = 3
 
   dat = packer.make_can_msg("LKAS11", 0, values)[2]

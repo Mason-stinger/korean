@@ -152,6 +152,17 @@ class Controls:
     self.rk = Ratekeeper(100, print_delay_threshold=None)
     self.prof = Profiler(False)  # off by default
 
+    self.hyundai_lkas = self.read_only  #read_only 자동인게이지 관련
+
+    self.controlsAllowed = 0 # 자동 인게이지 관련
+    self.timer_allowed = 1500 # 자동 인게이지 관련
+    self.timer_start = 1500 # 자동 인게이지 관련
+
+  def auto_enable(self, CS): # 자동 인게이지
+    if self.state != State.enabled and CS.vEgo >= 15 * CV.KPH_TO_MS and CS.gearShifter == 2:
+      if self.sm.all_alive_and_valid() and self.enabled != self.controlsAllowed:
+        self.events.add( EventName.pcmEnable )
+
   def update_events(self, CS):
     """Compute carEvents from carState"""
 
@@ -163,6 +174,10 @@ class Controls:
     if self.startup_event is not None:
       self.events.add(self.startup_event)
       self.startup_event = None
+      self.timer_start = 500 # 자동인게이지 관련
+
+    if self.timer_start: # 자동인게이지 관련
+      self.timer_start -= 1 # 자동인게이지 관련
 
     # Create events for battery, temperature, disk space, and memory
     if self.sm['thermal'].batteryPercent < 1 and self.sm['thermal'].chargingError:
@@ -186,7 +201,7 @@ class Controls:
 
     # Handle calibration status
     cal_status = self.sm['liveCalibration'].calStatus
-    if cal_status != Calibration.CALIBRATED:
+    if cal_status != Calibration.CALIBRATED and not self.timer_start: # 자동인게이지 관련
       if cal_status == Calibration.UNCALIBRATED:
         self.events.add(EventName.calibrationIncomplete)
       else:
@@ -217,7 +232,7 @@ class Controls:
     if not self.sm.alive['plan'] and self.sm.alive['pathPlan']:
       # only plan not being received: radar not communicating
       self.events.add(EventName.radarCommIssue)
-    elif not self.sm.all_alive_and_valid():
+    elif not self.timer_start and not self.sm.all_alive_and_valid(): # 자동인게이지 관련
       self.events.add(EventName.commIssue)
     if not self.sm['pathPlan'].mpcSolutionValid and not (EventName.turningIndicatorOn in self.events.names):
       self.events.add(EventName.plannerError)
@@ -253,6 +268,8 @@ class Controls:
     #  and self.CP.openpilotLongitudinalControl and CS.vEgo < 0.3:
     #  self.events.add(EventName.noTarget)
 
+    self.auto_enable( CS ) # 자동 인게이지 코드 관련
+
   def data_sample(self):
     """Receive data from sockets and update carState"""
 
@@ -273,10 +290,10 @@ class Controls:
     # we want to disengage openpilot. However the status from the panda goes through
     # another socket other than the CAN messages and one can arrive earlier than the other.
     # Therefore we allow a mismatch for two samples, then we trigger the disengagement.
+    self.controlsAllowed = self.sm['health'].controlsAllowed # 자동인게이지 관련
     if not self.enabled:
       self.mismatch_counter = 0
-
-    if not self.sm['health'].controlsAllowed and self.enabled:
+    elif not self.controlsAllowed: # 자동인게이지 관련
       self.mismatch_counter += 1
 
     self.distance_traveled += CS.vEgo * DT_CTRL
@@ -290,7 +307,6 @@ class Controls:
 
     # if stock cruise is completely disabled, then we can use our own set speed logic
     self.CP.enableCruise = self.CI.CP.enableCruise
-
     #if not self.CP.enableCruise:
     #  self.v_cruise_kph = update_v_cruise(self.v_cruise_kph, CS.buttonEvents, self.enabled, self.is_metric)
     #elif self.CP.enableCruise and CS.cruiseState.enabled:
@@ -390,9 +406,7 @@ class Controls:
     v_acc_sol = plan.vStart + dt * (a_acc_sol + plan.aStart) / 2.0
 
     # Gas/Brake PID loop
-
     #actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP)
-
     # scc smoother
     actuators.gas, actuators.brake = self.LoC.update(self.active and CS.cruiseState.speed > 1., CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP)
 
@@ -431,7 +445,7 @@ class Controls:
     CC.cruiseOpMaxSpeed = self.cruiseOpMaxSpeed
 
     CC.cruiseControl.override = True
-    CC.cruiseControl.cancel = self.CP.enableCruise and not self.enabled and CS.cruiseState.enabled
+    CC.cruiseControl.cancel = not self.CP.enableCruise or (not self.enabled and CS.cruiseState.enabled) # 자동관련
 
     # Some override values for Honda
     # brake discount removes a sharp nonlinearity
@@ -476,7 +490,7 @@ class Controls:
     self.AM.process_alerts(self.sm.frame, clear_event)
     CC.hudControl.visualAlert = self.AM.visual_alert
 
-    if not self.read_only:
+    if not self.hyundai_lkas and self.enabled and self.controlsAllowed and not self.timer_start: #자동인게이지 관련
       # send car controls over can
       can_sends = self.CI.apply(CC, self)
       self.pm.send('sendcan', can_list_to_can_capnp(can_sends, msgtype='sendcan', valid=CS.canValid))
@@ -576,9 +590,15 @@ class Controls:
     CS = self.data_sample()
     self.prof.checkpoint("Sample")
 
+    if self.read_only: # 자동 인게이지 관련
+      self.hyundai_lkas = self.read_only
+    elif CS.cruiseState.enabled and self.hyundai_lkas:
+      self.hyundai_lkas = False
+
+
     self.update_events(CS)
 
-    if not self.read_only:
+    if not self.hyundai_lkas: # 원래는 read.only 자동인게이지 관련
       # Update control state
       self.state_transition(CS)
       self.prof.checkpoint("State transition")
@@ -591,6 +611,9 @@ class Controls:
     # Publish data
     self.publish_logs(CS, start_time, actuators, v_acc, a_acc, lac_log)
     self.prof.checkpoint("Sent")
+
+    if not CS.cruiseState.enabled and not self.hyundai_lkas: # 자동인게이지 관련
+      self.hyundai_lkas = True
 
   def controlsd_thread(self):
     while True:
