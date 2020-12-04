@@ -166,6 +166,8 @@ typedef struct UIScene {
   float gpsAltitude;
 
   bool recording;
+  // Tenesi
+  float currentGear;
 } UIScene;
 
 typedef struct {

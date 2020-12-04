@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
     // poll for touch events
     int touch_x = -1, touch_y = -1;
     int touched = touch_poll(&touch, &touch_x, &touch_y, 0);
-	
+
 #if UI_FEATURE_DASHCAM
     if(s->awake)
     {

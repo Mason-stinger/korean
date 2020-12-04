@@ -106,6 +106,10 @@ class CarState(CarStateBase):
       ret.gas = cp.vl["EMS12"]['PV_AV_CAN'] / 100
       ret.gasPressed = bool(cp.vl["EMS16"]["CF_Ems_AclAct"])
 
+    gear_disp2 = cp.vl["LVR11"] #["CF_Lvr_CGear"] # LVR11 등의 CAN ID를 기반으로한 데이터는 다음과 같게도 표시가능하다..
+    ret.currentGear = cp.vl["LVR11"]["CF_Lvr_CGear"]
+    print(gear_disp2)
+
     # TODO: refactor gear parsing in function
     # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection,
     # as this seems to be standard over all cars, but is not the preferred method.
@@ -123,6 +127,8 @@ class CarState(CarStateBase):
     # Gear Selecton via TCU12
     elif self.CP.carFingerprint in FEATURES["use_tcu_gears"]:
       gear = cp.vl["TCU12"]["CUR_GR"]
+      gear_disp = cp.vl["TCU12"]
+      print(gear_disp)
       if gear == 0:
         ret.gearShifter = GearShifter.park
       elif gear == 14:
@@ -134,6 +140,8 @@ class CarState(CarStateBase):
     # Gear Selecton - This is only compatible with optima hybrid 2017
     elif self.CP.carFingerprint in FEATURES["use_elect_gears"]:
       gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
+      gear_disp = cp.vl["ELECT_GEAR"]
+      print(gear_disp)
       if gear in (5, 8):  # 5: D, 8: sport mode
         ret.gearShifter = GearShifter.drive
       elif gear == 6:
@@ -147,6 +155,8 @@ class CarState(CarStateBase):
     # Gear Selecton - This is not compatible with all Kia/Hyundai's, But is the best way for those it is compatible with
     else:
       gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
+      gear_disp = cp.vl["LVR12"]
+      print(gear_disp)
       if gear in (5, 8):  # 5: D, 8: sport mode
         ret.gearShifter = GearShifter.drive
       elif gear == 6:
@@ -189,7 +199,7 @@ class CarState(CarStateBase):
       self.mdps11_strang = cp_mdps.vl["MDPS11"]["CR_Mdps_StrAng"]
       self.mdps11_stat = cp_mdps.vl["MDPS11"]["CF_Mdps_Stat"]
 
-    self.lkas_error = cp_cam.vl["LKAS11"]["CF_Lkas_LdwsSysState"] == 7
+    self.lkas_error = cp_cam.vl["LKAS11"]["CF_Lkas_LdwsSysState"] == 7 # 차종 추가등 필요함
     if not self.lkas_error and self.car_fingerprint not in [CAR.SONATA,CAR.PALISADE,
                     CAR.SONATA_HEV, CAR.SANTA_FE, CAR.KONA_EV, CAR.NIRO_EV, CAR.KONA]:
       self.lkas_button_on = bool(cp_cam.vl["LKAS11"]["CF_Lkas_LdwsSysState"])
@@ -253,6 +263,16 @@ class CarState(CarStateBase):
       ("CF_VSM_Avail", "TCS13", 0),
 
       ("ESC_Off_Step", "TCS15", 0),
+
+      ("Lvr12_00", "LVR12", 0), # 테네시 추가
+      ("Lvr12_01", "LVR12", 0), # 테네시 추가
+      ("Lvr12_02", "LVR12", 0), # 테네시 추가
+      ("Lvr12_03", "LVR12", 0), # 테네시 추가
+      ("Lvr12_04", "LVR12", 0), # 테네시 추가
+      ("Lvr12_05", "LVR12", 0), # 테네시 추가
+      ("Lvr12_06", "LVR12", 0), # 테네시 추가
+      ("Lvr12_07", "LVR12", 0), # 테네시 추가
+      ("CF_Lvr_CGear", "LVR11", 0), # 테네시 추가
 
       ("CF_Lvr_GearInf", "LVR11", 0),        # Transmission Gear (0 = N or P, 1-8 = Fwd, 14 = Rev)
 
@@ -599,8 +619,8 @@ class CarState(CarStateBase):
         ("ComfortBandLower", "SCC14", 0),
       ]
       checks += [
-        ("SCC11", 50),
-        ("SCC12", 50),
+        ("SCC11", 40),
+        ("SCC12", 40),
       ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)

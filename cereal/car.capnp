@@ -193,6 +193,9 @@ struct CarState {
 
   cruiseGap @37 : Int32;
 
+  # Gear Current By Tenesi
+  currentGear @38 :Float32;
+
   struct WheelSpeeds {
     # optional wheel speeds
     fl @0 :Float32;

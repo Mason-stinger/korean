@@ -166,7 +166,9 @@ void update_sockets(UIState *s) {
 
   if (sm.updated("carState"))
    {
-    scene.car_state = sm["carState"].getCarState();
+    auto data = sm["carState"].getCarState();
+    //scene.car_state = sm["carState"].getCarState();
+    scene.currentGear = data.getCurrentGear();
    }
 
    if (sm.updated("carControl"))

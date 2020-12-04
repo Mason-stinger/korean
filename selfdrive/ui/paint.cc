@@ -631,6 +631,9 @@ static void bb_ui_draw_debug(UIState *s)
 {
     const UIScene *scene = &s->scene;
     char str[1024];
+    char strGear[32];
+
+    snprintf(strGear, sizeof(strGear), "%.0f :기어단수", s->scene.currentGear);
 
     snprintf(str, sizeof(str), "SR: %.2f, SRC: %.3f, SAD: %.3f", scene->path_plan.getSteerRatio(),
                                                         scene->path_plan.getSteerRateCost(),
@@ -643,6 +646,7 @@ static void bb_ui_draw_debug(UIState *s)
     nvgTextAlign(s->vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 
     ui_draw_text(s->vg, x, y, str, 25 * 2.5, COLOR_WHITE_ALPHA(200), s->font_sans_semibold);
+    ui_draw_text(s->vg, x, y-100., strGear, 25 * 7., COLOR_WHITE_ALPHA(200), s->font_sans_semibold);
 
 
 #if 1
