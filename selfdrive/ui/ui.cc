@@ -320,8 +320,8 @@ void ui_update(UIState *s) {
   if (s->started && !s->scene.frontview && ((s->sm)->frame - s->started_frame) > 5*UI_FREQ) {
     if ((s->sm)->rcv_frame("controlsState") < s->started_frame) {
       // car is started, but controlsState hasn't been seen at all
-      s->scene.alert_text1 = "openpilot Unavailable";
-      s->scene.alert_text2 = "Waiting for controls to start";
+      s->scene.alert_text1 = "자율 주행을 시작할수 없사와요~";
+      s->scene.alert_text2 = "교주사마~ 도와주세요~~ 니가 수정 잘못한건 아니고???";
       s->scene.alert_size = cereal::ControlsState::AlertSize::MID;
     } else if (((s->sm)->frame - (s->sm)->rcv_frame("controlsState")) > 5*UI_FREQ) {
       // car is started, but controls is lagging or died
@@ -330,8 +330,8 @@ void ui_update(UIState *s) {
         LOGE("Controls unresponsive");
       }
 
-      s->scene.alert_text1 = "TAKE CONTROL IMMEDIATELY";
-      s->scene.alert_text2 = "Controls Unresponsive";
+      s->scene.alert_text1 = "..조향 도움등을 할수가 없습니다..";
+      s->scene.alert_text2 = "..차량과 제어가 문제가 있습니다..문제는 알아서 찾으삼!";
       s->scene.alert_size = cereal::ControlsState::AlertSize::FULL;
       s->status = STATUS_ALERT;
     }
