@@ -146,16 +146,19 @@ class CarState(CarStateBase):
       gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
       gear_disp = cp.vl["ELECT_GEAR"]
       print(gear_disp)
-      if gear in (5, 8):  # 5: D, 8: sport mode
-        ret.gearShifter = GearShifter.drive
-      elif gear == 6:
-        ret.gearShifter = GearShifter.neutral
-      elif gear == 0:
-        ret.gearShifter = GearShifter.park
-      elif gear == 7:
-        ret.gearShifter = GearShifter.reverse
+      if gear == 2570:
+        pass
       else:
-        ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
+        if gear == 2566:  # 5: D, 8: sport mode 넥소대응
+          ret.gearShifter = GearShifter.drive
+        elif gear == 2569:
+          ret.gearShifter = GearShifter.neutral
+        elif gear == 2314:
+          ret.gearShifter = GearShifter.park
+        elif gear == 1546:
+          ret.gearShifter = GearShifter.reverse
+        else:
+          ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
     # Gear Selecton - This is not compatible with all Kia/Hyundai's, But is the best way for those it is compatible with
     else:
       gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
