@@ -36,6 +36,8 @@ class CarState(CarStateBase):
     self.cruiseState_enabled = False
     self.cruiseState_speed = 0
 
+    self.gear_shifter = GearShifter.unknown
+
   def update(self, cp, cp2, cp_cam):
     cp_mdps = cp2 if self.mdps_bus else cp
     cp_sas = cp2 if self.sas_bus else cp
@@ -145,20 +147,23 @@ class CarState(CarStateBase):
     elif self.CP.carFingerprint in FEATURES["use_elect_gears"]:
       gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
       gear_disp = cp.vl["ELECT_GEAR"]
-      print(gear_disp)
-      if gear == 2570:
-        print(gear_disp)
-      else:
-        if gear == 2566:  # 5: D, 8: sport mode 넥소대응
-          ret.gearShifter = GearShifter.drive
-        elif gear == 2569:
-          ret.gearShifter = GearShifter.neutral
-        elif gear == 2314:
-          ret.gearShifter = GearShifter.park
-        elif gear == 1546:
-          ret.gearShifter = GearShifter.reverse
-        else:
-          ret.gearShifter = GearShifter.drive #TenesiADD 패들쉬프트 작동시 오파 작동되게 수정
+
+      gear_shifter = GearShifter.unknown
+
+      if gear == 2566:  # 5: D, 8: sport mode 넥소대응
+        gear_shifter = GearShifter.drive
+      elif gear == 2569:
+        gear_shifter = GearShifter.neutral
+      elif gear == 2314:
+        gear_shifter = GearShifter.park
+      elif gear == 1546:
+        gear_shifter = GearShifter.reverse
+
+      if self.gear_shifter != gear_shifter:
+        self.gear_shifter = gear_shifter
+
+      ret.gearShifter = self.gear_shifter
+
     # Gear Selecton - This is not compatible with all Kia/Hyundai's, But is the best way for those it is compatible with
     else:
       gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
